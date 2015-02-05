@@ -52,6 +52,13 @@ public class Tjuner {
     // control tuning loop
     private boolean doTune;
 
+    // Notes
+    private final String[] NOTES = {"A", "A#", "H", "C", "C#", "D", "D#", "E", "F", "F#", "G"};
+    private final double[] FREQUENCIES = {110.00, 116.54, 123.47, 130.81, 138.59, 146.83, 155.56,
+            164.81, 174.61, 185.00, 196.00,220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13,
+            329.63, 349.23, 369.99, 392.00, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33, 622.25,
+            659.26, 698.46, 739.99, 783.99};
+
     public Tjuner(TjunerUIListener listener){
         this.doTune = false;
         this.pitch = 0;
@@ -103,28 +110,35 @@ public class Tjuner {
                     fft.realForward(fft_signal);
 
 
-                    //fft_signal = lowPassFilter(fft_signal, 10);
+                    fft_signal = lowPassFilter(fft_signal, 10);
 
                     // find maximum frequency
                     Map peaksMap = findPeaks(fft_signal, MIN_TUNING_FREQUENCY, MAX_TUNING_FREQUENCY, 2, 90);
-                    List peaks = new ArrayList();
+                    List<Integer> peaks = new ArrayList();
                     peaks.addAll(peaksMap.values());
                     Collections.reverse(peaks);
 
+                    // leading frequency
+                    double leadFreq = peaks.get(0);
 
-
-
-                    /*
-                    List<Integer> ext = new ArrayList<Integer>();
-                    for (int i = MIN_TUNING_FREQUENCY; i<MAX_TUNING_FREQUENCY; i++) {
-                        if ((fft_signal[i+1]-fft_signal[i])*(fft_signal[i+2]-fft_signal[i+1]) <= 0) { // changed sign?
-                            ext.add(i+1);
+                    // find coresponding note
+                    double diff = Double.MAX_VALUE;
+                    int closest = 0;
+                    for (int i=0; i<FREQUENCIES.length; i++){
+                        double tempDiff = Math.abs(FREQUENCIES[i] - leadFreq);
+                        if (tempDiff < diff){
+                            closest = i;
+                            diff = tempDiff;
                         }
-                    }*/
+                    }
+                    String ton = NOTES[closest%NOTES.length];
+
 
                     // test http://onlinetonegenerator.c
                     Log.e(LOG_TAG, "Pitch is " + peaks);
-                    listener.onPitch("" + peaks.get(0));
+                    Log.e(LOG_TAG, "Cloasest is " + closest);
+                    Log.e(LOG_TAG, "Note is " + ton);
+                    listener.onPitch("" + leadFreq);
 
                 }
 

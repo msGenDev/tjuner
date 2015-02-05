@@ -10,18 +10,15 @@ import android.widget.TextView;
 
 public class MainActivityWear extends Activity {
 
-    private TextView mTextView;
+    private TextView mTextViewNote;
+    private TextView mTextViewDiff;
     private Tjuner tjuner;
     private Handler handler;
 
     Tjuner.TjunerUIListener listener = new Tjuner.TjunerUIListener(){
         @Override
         public void onPitch(String s){
-            //mTextView.setText(s);
-
             displayData(s);
-
-            Log.e("MAIN", s);
         }
     };
 
@@ -29,7 +26,8 @@ public class MainActivityWear extends Activity {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                mTextView.setText(s);
+                mTextViewNote.setText(s);
+                mTextViewDiff.setText("JAN");
             }
         });
     }
@@ -45,22 +43,16 @@ public class MainActivityWear extends Activity {
 
                 handler = new Handler(Looper.getMainLooper());
 
-
                 tjuner = new Tjuner(listener);
                 tjuner.tune();
-                mTextView = (TextView) stub.findViewById(R.id.text);
+
+                mTextViewNote = (TextView) stub.findViewById(R.id.textViewNote);
+                mTextViewDiff = (TextView) stub.findViewById(R.id.textViewDiff);
 
 
 
             }
         });
-
-        //mTextView.setText("JAN");
-
-
-
-
-
 
     }
 
