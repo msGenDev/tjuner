@@ -17,17 +17,17 @@ public class MainActivityWear extends Activity {
 
     Tjuner.TjunerUIListener listener = new Tjuner.TjunerUIListener(){
         @Override
-        public void onPitch(String s){
-            displayData(s);
+        public void onPitch(String note, String diff){
+            displayData(note, diff);
         }
     };
 
-    private void displayData(final String s){
+    private void displayData(final String note, final String diff){
         handler.post(new Runnable() {
             @Override
             public void run() {
-                mTextViewNote.setText(s);
-                mTextViewDiff.setText("JAN");
+                mTextViewNote.setText(note);
+                mTextViewDiff.setText(diff);
             }
         });
     }
@@ -48,8 +48,6 @@ public class MainActivityWear extends Activity {
 
                 mTextViewNote = (TextView) stub.findViewById(R.id.textViewNote);
                 mTextViewDiff = (TextView) stub.findViewById(R.id.textViewDiff);
-
-
 
             }
         });

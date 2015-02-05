@@ -43,8 +43,8 @@ public class Tjuner {
     private final int WINDOW_SIZE_IN_SHORTS = SAMPLE_RATE * WINDOW_SIZE_IN_MS / 1000;
 
     // min and max tuning frequencies
-    private final int MIN_TUNING_FREQUENCY = 100;
-    private final int MAX_TUNING_FREQUENCY = 3000;
+    private final int MIN_TUNING_FREQUENCY = 90;
+    private final int MAX_TUNING_FREQUENCY = 1000;
 
     // pitch frequency
     private int pitch;
@@ -109,11 +109,12 @@ public class Tjuner {
 
                     fft.realForward(fft_signal);
 
-
+                    // apply low pass filter
                     fft_signal = lowPassFilter(fft_signal, 10);
 
                     // find maximum frequency
-                    Map peaksMap = findPeaks(fft_signal, MIN_TUNING_FREQUENCY, MAX_TUNING_FREQUENCY, 2, 90);
+                    Map peaksMap = findPeaks(fft_signal, MIN_TUNING_FREQUENCY,
+                            MAX_TUNING_FREQUENCY, 2, 90);
                     List<Integer> peaks = new ArrayList();
                     peaks.addAll(peaksMap.values());
                     Collections.reverse(peaks);
@@ -121,24 +122,26 @@ public class Tjuner {
                     // leading frequency
                     double leadFreq = peaks.get(0);
 
-                    // find coresponding note
+                    // find corresponding note and difference between recorded frequency
+                    // and correct frequency
                     double diff = Double.MAX_VALUE;
                     int closest = 0;
                     for (int i=0; i<FREQUENCIES.length; i++){
-                        double tempDiff = Math.abs(FREQUENCIES[i] - leadFreq);
-                        if (tempDiff < diff){
+                        double tempDiff = FREQUENCIES[i] - leadFreq;
+                        if (Math.abs(tempDiff) < Math.abs(diff)){
                             closest = i;
                             diff = tempDiff;
                         }
                     }
-                    String ton = NOTES[closest%NOTES.length];
+                    String note = NOTES[closest % NOTES.length];
 
-
-                    // test http://onlinetonegenerator.c
+                    // logging for debuging
+                    // site that generates test samples http://onlinetonegenerator.com
                     Log.e(LOG_TAG, "Pitch is " + peaks);
-                    Log.e(LOG_TAG, "Cloasest is " + closest);
-                    Log.e(LOG_TAG, "Note is " + ton);
-                    listener.onPitch("" + leadFreq);
+                    Log.e(LOG_TAG, "Note is " + note);
+
+                    // call listener, to display data
+                    listener.onPitch("" + note, String.format("%.2f", diff));
 
                 }
 
@@ -150,12 +153,23 @@ public class Tjuner {
                 return null;
             }
 
-
-
         }.execute();
     }
 
-    private Map<Double, Integer> findPeaks(double[] signal, int min, int max, int n, int k){
+    // listener used to send data to UI
+    interface TjunerUIListener {
+        void onPitch(String note, String diff);
+    }
+
+    // function for finding peaks in signal
+    private Map<Double, Integer> findPeaks(double[] signal, int min, int max, int n, int width){
+
+        // signal = imput signal
+        // min = minimal frequency to use
+        // max = maximal frequency to use
+        // n = number of peaks we want to find
+        // width = width of peak
+        // returns map (amplitude, frequency)
 
         Map<Double, Integer> peaks = new TreeMap<>();
         int peak = min;
@@ -166,16 +180,14 @@ public class Tjuner {
         }
         peaks.put(signal[peak], peak);
         if (n > 1){
-            //if (peak - min > k)
-            //    peaks.putAll(findPeaks(signal, min, peak - k, n - 2, k));
-            peaks.putAll(findPeaks(signal, peak + k, max, n - 1, k));
+            peaks.putAll(findPeaks(signal, peak + width, max, n - 1, width));
         }
-
 
         return peaks;
 
     }
 
+    // simple low pass filter
     private double[] lowPassFilter(double[] signal, int smoothing){
         double value = signal[0];
         for (int i=0; i<signal.length; i++){
@@ -186,7 +198,4 @@ public class Tjuner {
         return signal;
     }
 
-    interface TjunerUIListener {
-        void onPitch(String s);
-    }
 }
